@@ -6,12 +6,10 @@ android {
 
     defaultConfig {
         applicationId "dev.aftermoon.indianpoker"
-        minSdkVersion 23
+        minSdkVersion 26
         targetSdkVersion 29
-        versionCode 1
-        versionName "1.0"
-
-        testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
+        versionCode 1000
+        versionName "1.0.0a"
     }
 
     buildFeatures {

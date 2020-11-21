@@ -7,7 +7,6 @@ import android.view.View;
 import androidx.appcompat.app.AppCompatActivity;
 
 import dev.aftermoon.indianpoker.databinding.ActivityStartBinding;
-import dev.aftermoon.indianpoker.game.GameActivity;
 
 public class StartActivity extends AppCompatActivity {
     private ActivityStartBinding binding;
