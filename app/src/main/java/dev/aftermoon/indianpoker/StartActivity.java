@@ -21,6 +21,9 @@ public class StartActivity extends AppCompatActivity {
             @Override
             public void onClick(View v) {
                 Intent i = new Intent(getApplicationContext(), GameActivity.class);
+                Bundle bundle = new Bundle();
+                bundle.putString("name", binding.etPlayername.getText().toString());
+                i.putExtras(bundle);
                 startActivity(i);
             }
         });

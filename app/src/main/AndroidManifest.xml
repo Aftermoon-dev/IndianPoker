@@ -21,8 +21,10 @@
         <activity android:name=".StartActivity"
             android:theme="@style/AppTheme.Fullscreen"
             android:screenOrientation="portrait" />
+
         <activity android:name=".GameActivity"
             android:theme="@style/AppTheme.Fullscreen"
+            android:configChanges="screenSize|orientation"
             android:screenOrientation="landscape" />
     </application>
 
