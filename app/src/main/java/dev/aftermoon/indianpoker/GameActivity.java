@@ -473,6 +473,7 @@ public class GameActivity extends AppCompatActivity {
     }
 
     private void setPlayerBetMethodText() {
+        Toast.makeText(this, getBetMethodText(PLAYER) + "을(를) 선택하셨습니다.", Toast.LENGTH_SHORT).show();
         binding.tvCurrentPlayerbet.setText(getString(R.string.current_betmethod, getBetMethodText(PLAYER), calculateBetPrice(playerBetMethod[PLAYER], PLAYER, COMPUTER)));
     }
 
