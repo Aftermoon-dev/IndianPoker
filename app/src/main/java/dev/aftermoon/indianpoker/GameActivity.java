@@ -1,16 +1,18 @@
 package dev.aftermoon.indianpoker;
 
-import androidx.annotation.NonNull;
+import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.content.res.ResourcesCompat;
 
-import android.content.res.Configuration;
+import android.content.DialogInterface;
 import android.os.Bundle;
 import android.os.CountDownTimer;
-import android.os.Handler;
 import android.util.Log;
 import android.view.View;
 import android.widget.Toast;
+
+import com.skydoves.elasticviews.ElasticAnimation;
+import com.skydoves.elasticviews.ElasticFinishListener;
 
 import java.util.Arrays;
 import java.util.Random;
@@ -53,9 +55,10 @@ public class GameActivity extends AppCompatActivity {
     // 현재 게임 내에서의 남은 카드 수의 갯수
     private int currentRemainCard;
 
+    // 유저 이름
     private String userName;
 
-
+    /** 안드로이드 Override **/
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -69,9 +72,6 @@ public class GameActivity extends AppCompatActivity {
 
         binding.tvPlayerName.setText(userName);
 
-        // Activity 들어올 땐 System UI 숨기기
-        Util.hideSystemUI(getWindow());
-
         // 버튼 이벤트 설정
         setButtonEvent();
 
@@ -83,21 +83,14 @@ public class GameActivity extends AppCompatActivity {
     }
 
     @Override
-    public void onConfigurationChanged(@NonNull Configuration newConfig) {
-        super.onConfigurationChanged(newConfig);
-    }
+    public void onBackPressed() { }
 
-    @Override
-    protected void onDestroy() {
-        // Activity 나갈땐 System UI 다시 나타내기
-        Util.showSystemUI(getWindow());
-        super.onDestroy();
-    }
-
+    /** UI 관련 **/
     private void setButtonEvent() {
         binding.btnDie.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
+                showBtnAnimation(v);
                 playerBetMethod[PLAYER] = 0;
                 setPlayerBetMethodText();
             }
@@ -106,6 +99,7 @@ public class GameActivity extends AppCompatActivity {
         binding.btnCall.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
+                showBtnAnimation(v);
                 playerBetMethod[PLAYER] = 1;
                 setPlayerBetMethodText();
             }
@@ -114,6 +108,7 @@ public class GameActivity extends AppCompatActivity {
         binding.btnQuarter.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
+                showBtnAnimation(v);
                 playerBetMethod[PLAYER] = 2;
                 setPlayerBetMethodText();
             }
@@ -122,6 +117,7 @@ public class GameActivity extends AppCompatActivity {
         binding.btnHalf.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
+                showBtnAnimation(v);
                 playerBetMethod[PLAYER] = 3;
                 setPlayerBetMethodText();
             }
@@ -130,29 +126,87 @@ public class GameActivity extends AppCompatActivity {
         binding.btnAllin.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
+                showBtnAnimation(v);
                 playerBetMethod[PLAYER] = 4;
                 setPlayerBetMethodText();
             }
         });
     }
 
+    private void setPlayerBetMethodText() {
+        Toast.makeText(this, getBetMethodText(PLAYER) + "을(를) 선택하셨습니다.", Toast.LENGTH_SHORT).show();
+        binding.tvCurrentPlayerbet.setText(getString(R.string.current_betmethod, getBetMethodText(PLAYER), calculateBetPrice(playerBetMethod[PLAYER], PLAYER, COMPUTER)));
+    }
+
+    private String getBetMethodText(int player) {
+        String betString = "";
+        if(playerBetMethod[player] == 0) betString = "다이";
+        else if(playerBetMethod[player] == 1) betString = "콜";
+        else if(playerBetMethod[player] == 2) betString = "쿼터";
+        else if(playerBetMethod[player] == 3) betString = "하프";
+        else if(playerBetMethod[player] == 4) betString = "올인";
+        return betString;
+    }
+
+    private void showBtnAnimation(View v) {
+        // 버튼 에니메이션 설정
+        new ElasticAnimation(v)
+                .setScaleX(0.85f)
+                .setScaleY(0.85f)
+                .setDuration(800)
+                .setOnFinishListener(new ElasticFinishListener() {
+                    @Override
+                    public void onFinished() {
+
+                    }
+                })
+                .doAction();
+    }
+
+    private void enablePlayerButton() {
+        // 플레이어의 버튼 활성화 (베팅 가능한 금액인경우)
+        binding.btnDie.setEnabled(calculateBetPrice(0, PLAYER, COMPUTER) >= 0);
+        binding.btnCall.setEnabled(calculateBetPrice(1, PLAYER, COMPUTER) >= 0);
+        binding.btnQuarter.setEnabled(calculateBetPrice(2, PLAYER, COMPUTER) >= 0);
+        binding.btnHalf.setEnabled(calculateBetPrice(3, PLAYER, COMPUTER) >= 0);
+        binding.btnAllin.setEnabled(calculateBetPrice(4, PLAYER, COMPUTER) >= 0);
+    }
+
+    private void disablePlayerButton() {
+        // 플레이어의 모든 버튼 비활성화
+        binding.btnDie.setEnabled(false);
+        binding.btnCall.setEnabled(false);
+        binding.btnQuarter.setEnabled(false);
+        binding.btnHalf.setEnabled(false);
+        binding.btnAllin.setEnabled(false);
+    }
+
+    /** 변수 관련 **/
     private void resetVariable() {
-        Arrays.fill(cardList, 2);
+        // 변수 리셋
+        resetCard();
         Arrays.fill(playerCard, 0);
         Arrays.fill(playerCoin, 100);
         Arrays.fill(playerBetCoin, 0);
         Arrays.fill(playerBetMethod, 0);
-        Arrays.fill(computerCardList, 2);
         currentAllBetCoin = 0;
-        currentRemainCard = 20;
 
+        // 텍스트 리셋
         binding.tvUserCoin.setText(getString(R.string.current_coin, playerCoin[PLAYER]));
         binding.tvComputerCoin.setText(getString(R.string.current_coin, playerCoin[COMPUTER]));
         binding.tvCurrentPlayerbet.setText(getString(R.string.current_betmethod, getBetMethodText(PLAYER), calculateBetPrice(playerBetMethod[PLAYER], PLAYER, COMPUTER)));
+        binding.tvCurrentCombet.setText(getString(R.string.current_betmethod, getBetMethodText(COMPUTER), calculateBetPrice(playerBetMethod[COMPUTER], COMPUTER, PLAYER)));
         binding.ivCompterCard.setImageResource(R.drawable.card_blind);
         binding.ivPlayerCard.setImageResource(R.drawable.card_blind);
     }
 
+    private void resetCard() {
+        currentRemainCard = 20;
+        Arrays.fill(cardList, 2);
+        Arrays.fill(computerCardList, 2);
+    }
+
+    /** 게임 진행 관련 **/
     private int getRandomCard() {
         // 현재 남은 카드가 2장 이상이여야 게임을 진행할 수 있음
         if(currentRemainCard >= 2) {
@@ -169,6 +223,9 @@ public class GameActivity extends AppCompatActivity {
                 // 해당 카드의 남은 수 1 제거
                 cardList[card - 1]--;
 
+                // 카드 남은 수 Text 설정
+                binding.tvCurrentCard.setText(getString(R.string.current_remaincard, currentRemainCard));
+
                 // 해당 카드를 리턴
                 return card;
             }
@@ -177,10 +234,10 @@ public class GameActivity extends AppCompatActivity {
                 return getRandomCard();
             }
         }
-        // 남은 카드가 2장 미만이면 -1을 리턴
+        // 남은 카드가 2장 미만이면 카드 초기화
         else {
-            Log.d("card", "NO CARD!");
-            return -1;
+            resetCard();
+            return getRandomCard();
         }
 
     }
@@ -189,8 +246,8 @@ public class GameActivity extends AppCompatActivity {
     private void gameStart(boolean isResetBet) {
         if(this.isDestroyed()) return;
 
-        if(playerCoin[PLAYER] < 1 && playerCoin[COMPUTER] < 1) {
-            Toast.makeText(this, "모든 플레이어가 1원 이상의 돈이 있어야 시작할 수 있습니다! 게임을 종료합니다.", Toast.LENGTH_LONG).show();
+        if(playerCoin[PLAYER] < 1 || playerCoin[COMPUTER] < 1) {
+            Toast.makeText(this, "코인이 모자라서 게임을 종료합니다.", Toast.LENGTH_LONG).show();
             finish();
             return;
         }
@@ -244,14 +301,20 @@ public class GameActivity extends AppCompatActivity {
         // 플레이어 버튼 활성화
         enablePlayerButton();
 
+        // 현재 베팅 방법을 선택할 수 없으면 다이로 변경
+        if(calculateBetPrice(playerBetMethod[PLAYER], PLAYER, COMPUTER) == -1) {
+            playerBetMethod[PLAYER] = 0;
+            binding.tvCurrentPlayerbet.setText(getString(R.string.current_betmethod, getBetMethodText(PLAYER), calculateBetPrice(playerBetMethod[PLAYER], PLAYER, COMPUTER)));
+        }
+
         // 플레이어에게 메시지 출력
-        Toast.makeText(this, "당신의 턴입니다! 15초 동안 배팅을 해주세요.", Toast.LENGTH_SHORT).show();
+        Toast.makeText(this, "당신의 턴입니다! 10초 안에 배팅을 해주세요.", Toast.LENGTH_SHORT).show();
 
         // 현재 턴 플레이어 이름 변경
         binding.tvCurrentTurn.setText(getString(R.string.current_turn, userName));
 
         // 30초 타이머 작동
-        CountDownTimer countDownTimer = new CountDownTimer((15*1000), 1000) {
+        CountDownTimer countDownTimer = new CountDownTimer((10*1000), 1000) {
             @Override
             public void onTick(long millisUntilFinished) {
                 // 초당 변경
@@ -293,6 +356,8 @@ public class GameActivity extends AppCompatActivity {
                 playerBetMethod[COMPUTER] = calculateComputer();
                 Toast.makeText(GameActivity.this, "안드로이드는 " + getBetMethodText(COMPUTER) + "(을)를 선택했습니다!", Toast.LENGTH_SHORT).show();
 
+                binding.tvCurrentCombet.setText(getString(R.string.current_betmethod, getBetMethodText(COMPUTER), calculateBetPrice(playerBetMethod[COMPUTER], COMPUTER, PLAYER)));
+
                 // 베팅
                 playerBet(COMPUTER, calculateBetPrice(playerBetMethod[COMPUTER], COMPUTER, PLAYER));
 
@@ -301,49 +366,6 @@ public class GameActivity extends AppCompatActivity {
             }
         };
         countDownTimer.start();
-    }
-
-    private void gameResult() {
-        // 둘 중에 한 명이라도 콜이나 다이를 한 경우
-        if((playerBetMethod[PLAYER] == 0 || playerBetMethod[PLAYER] == 1) || (playerBetMethod[COMPUTER] == 0 || playerBetMethod[COMPUTER] == 1)) {
-            // 카드 공개
-            cardOpen();
-
-            // 승자 확인
-            final int winner = getWinner();
-
-            if(winner == PLAYER) {
-                Toast.makeText(this, "당신의 승리입니다! 5초 후 게임이 계속됩니다.", Toast.LENGTH_SHORT).show();
-            }
-            else if(winner == COMPUTER) {
-                Toast.makeText(this, "당신의 패배입니다. 5초 후 게임이 계속됩니다.", Toast.LENGTH_SHORT).show();
-            }
-            else {
-                Toast.makeText(this, "무승부입니다! 현재 베팅 코인이 유지됩니다! 5초 후 게임이 계속됩니다.", Toast.LENGTH_SHORT).show();
-            }
-
-            // 카드 10인데 다이하면 10원씩 깎임
-            if(playerBetMethod[COMPUTER] == 0 && playerCard[COMPUTER] == 10) {
-                playerCoin[COMPUTER] -= 10;
-            }
-
-            if(playerBetMethod[PLAYER] == 0 && playerCard[PLAYER] == 10) {
-                playerCoin[PLAYER] -= 10;
-            }
-
-            if(winner != -1) playerCoin[winner] += currentAllBetCoin;
-
-            new Handler().postDelayed(new Runnable() {
-                @Override
-                public void run() {
-                    gameStart(winner != -1);
-                }
-            }, 5000);
-
-        }
-        else {
-            Toast.makeText(this, "만드는중", Toast.LENGTH_LONG).show();
-        }
     }
 
     private int getWinner() {
@@ -385,24 +407,78 @@ public class GameActivity extends AppCompatActivity {
         computerCardList[playerCard[COMPUTER]-1]++;
     }
 
-    private void enablePlayerButton() {
-        // 플레이어의 버튼 활성화 (베팅 가능한 금액인경우)
-        binding.btnDie.setEnabled(calculateBetPrice(0, PLAYER, COMPUTER) >= 0);
-        binding.btnCall.setEnabled(calculateBetPrice(1, PLAYER, COMPUTER) >= 0);
-        binding.btnQuarter.setEnabled(calculateBetPrice(2, PLAYER, COMPUTER) >= 0);
-        binding.btnHalf.setEnabled(calculateBetPrice(3, PLAYER, COMPUTER) >= 0);
-        binding.btnAllin.setEnabled(calculateBetPrice(4, PLAYER, COMPUTER) >= 0);
+    private void gameResult() {
+        String dialogText = "";
+
+        // 둘 중에 한 명이라도 돈이 없거나 콜/다이를 한 경우
+        if((playerCoin[PLAYER] == 0 || playerCoin[COMPUTER] == 0) || (playerBetMethod[PLAYER] == 0 || playerBetMethod[PLAYER] == 1) || (playerBetMethod[COMPUTER] == 0 || playerBetMethod[COMPUTER] == 1)) {
+            // 카드 공개
+            cardOpen();
+
+            // 승자 확인
+            final int winner = getWinner();
+
+            // 승리 플레이어에 따라 Dialog 내용 변경하기
+            if(winner == PLAYER) {
+                dialogText = "승리하셨습니다!";
+            }
+            else if(winner == COMPUTER) {
+                dialogText = "패배했습니다!";
+            }
+            else {
+                dialogText = "무승부입니다! 현재 베팅 (" +  currentAllBetCoin  + "코인) 이 유지됩니다!";
+            }
+
+            // 카드 10인데 다이하면 10원씩 깎임
+            if(playerBetMethod[COMPUTER] == 0 && playerCard[COMPUTER] == 10) {
+                playerCoin[COMPUTER] -= 10;
+            }
+
+            if(playerBetMethod[PLAYER] == 0 && playerCard[PLAYER] == 10) {
+                Toast.makeText(this, "카드 10을 가지고 다이를 했기 때문에 10코인이 감소됩니다.", Toast.LENGTH_LONG).show();
+                playerCoin[PLAYER] -= 10;
+            }
+
+            if(winner != -1) playerCoin[winner] += currentAllBetCoin;
+
+            AlertDialog.Builder dialogBuilder = new AlertDialog.Builder(this)
+                    .setTitle("Indian Poker")
+                    .setMessage(dialogText)
+                    .setCancelable(false)
+                    .setNegativeButton("나가기", new DialogInterface.OnClickListener() {
+                        @Override
+                        public void onClick(DialogInterface dialog, int which) {
+                            finish();
+                        }
+                    });
+
+            // 코인이 1개라도 있다면 계속하기 버튼 출력
+            if(playerCoin[PLAYER] > 0) {
+                dialogBuilder.setMessage(dialogText + "\n게임을 계속하시겠습니까?")
+                        .setPositiveButton("계속하기", new DialogInterface.OnClickListener() {
+                            @Override
+                            public void onClick(DialogInterface dialog, int which) {
+                                gameStart(winner != -1);
+                            }
+                        });
+            }
+
+            AlertDialog dialog = dialogBuilder.create();
+            dialog.show();
+        }
+        else {
+            // TODO : 이어서 베팅
+            continueGame();
+        }
     }
 
-    private void disablePlayerButton() {
-        // 플레이어의 모든 버튼 비활성화
-        binding.btnDie.setEnabled(false);
-        binding.btnCall.setEnabled(false);
-        binding.btnQuarter.setEnabled(false);
-        binding.btnHalf.setEnabled(false);
-        binding.btnAllin.setEnabled(false);
+    private void continueGame() {
+        if(playerCoin[PLAYER] == 0 || playerCoin[COMPUTER] == 0) gameResult();
+        playerTurn();
     }
 
+
+    /** 베팅 계산 **/
     private int calculateComputer() {
         int pcBetMethod = -1;
         int winN = 0;
@@ -460,21 +536,6 @@ public class GameActivity extends AppCompatActivity {
         }
         // Player가 가진 코인 수가 베팅을 원하는 코인 수보다 적다면 베팅 실패이므로 false 리턴
         else return false;
-    }
-
-    private String getBetMethodText(int player) {
-        String betString = "";
-        if(playerBetMethod[player] == 0) betString = "다이";
-        else if(playerBetMethod[player] == 1) betString = "콜";
-        else if(playerBetMethod[player] == 2) betString = "쿼터";
-        else if(playerBetMethod[player] == 3) betString = "하프";
-        else if(playerBetMethod[player] == 4) betString = "올인";
-        return betString;
-    }
-
-    private void setPlayerBetMethodText() {
-        Toast.makeText(this, getBetMethodText(PLAYER) + "을(를) 선택하셨습니다.", Toast.LENGTH_SHORT).show();
-        binding.tvCurrentPlayerbet.setText(getString(R.string.current_betmethod, getBetMethodText(PLAYER), calculateBetPrice(playerBetMethod[PLAYER], PLAYER, COMPUTER)));
     }
 
     private int calculateBetPrice(int method, int player, int player2) {
