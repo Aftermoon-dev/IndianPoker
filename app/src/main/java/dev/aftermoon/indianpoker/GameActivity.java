@@ -187,6 +187,8 @@ public class GameActivity extends AppCompatActivity {
 
     // 일반 게임 시작
     private void gameStart(boolean isResetBet) {
+        if(this.isDestroyed()) return;
+
         if(playerCoin[PLAYER] < 1 && playerCoin[COMPUTER] < 1) {
             Toast.makeText(this, "모든 플레이어가 1원 이상의 돈이 있어야 시작할 수 있습니다! 게임을 종료합니다.", Toast.LENGTH_LONG).show();
             finish();
