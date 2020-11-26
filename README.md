@@ -2,7 +2,8 @@
 Indian Poker Game with Computer for Android
 
 ## Algorithm 
- * Greedy Algorithm : Based on the opponent's card, calculate the probability that the card I have will win or lose and decide how to bet.
+ * Dynamic Programming & Greedy Algorithm
+    - Based on the opponent's card, calculate the probability that the card I have will win or lose and decide how to bet.
 
 ## Developer
 2020-2 Gachon Univ. Dept. of Software Algorithm Class #004 - Team #8
