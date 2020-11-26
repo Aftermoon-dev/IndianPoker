@@ -38,6 +38,9 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 THE SOFTWARE.
 ```
 
+### Gachon Univ. Logo
+https://www.gachon.ac.kr/introduce/gachon/06.jsp
+
 ## License
 ```
 MIT License
