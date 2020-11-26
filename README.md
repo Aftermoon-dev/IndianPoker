@@ -8,7 +8,7 @@ Indian Poker Game with Computer for Android
 ## Developer
 2020-2 Gachon Univ. Dept. of Software Algorithm Class #004 - Team #8
 |Name|Minjae Seon|Hyeonho Shin|Yejin Oh|JeongMin Oh|
-|--|:--:|:--:|:--:|:--:|
+|:--|:--:|:--:|:--:|:--:|
 |**Role**|Algorithm<br>Android|Algorithm<br>Prototype|Algorithm<br>GUI Design|Algorithm<br>GUI Design|
 
 ## 3rd-Party License
