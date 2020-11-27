@@ -32,6 +32,8 @@
             android:theme="@style/AppTheme.Fullscreen"
             android:configChanges="screenSize|orientation"
             android:screenOrientation="sensorLandscape" />
+
+        <service android:name=".BGMService" />
     </application>
 
 </manifest>

@@ -5,9 +5,12 @@ import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.content.res.ResourcesCompat;
 
 import android.content.DialogInterface;
+import android.content.Intent;
+import android.content.SharedPreferences;
 import android.graphics.Point;
 import android.os.Bundle;
 import android.os.CountDownTimer;
+import android.os.SystemClock;
 import android.util.Log;
 import android.view.Display;
 import android.view.View;
@@ -68,18 +71,30 @@ public class GameActivity extends AppCompatActivity {
     private String userName;
 
     // 베팅 대기 Countdown
-    CountDownTimer countDownTimer;
+    private CountDownTimer countDownTimer;
 
+    // 타이머 일시정지 이전 시간 저장용
     private long currentMillis;
+
+    // 효과음 재생 매니저
+    private EffectSoundManager effectSoundManager;
 
     /** 안드로이드 Override **/
     @Override
     protected void onCreate(Bundle savedInstanceState) {
+        // 효과음 재생 매니저 로드
+        effectSoundManager = EffectSoundManager.getInstance(this);
+        SystemClock.sleep(100); // 슬립하고 싶진 않지만.... 일단 SoundPool 로드를 위해 슬립
+
+        // 시작 사운드 재생
+        effectSoundManager.play(R.raw.start);
+
         super.onCreate(savedInstanceState);
         binding = ActivityGameBinding.inflate(getLayoutInflater());
         View view = binding.getRoot();
         setContentView(view);
 
+        // 플레이어 이름 설정
         Bundle bundle = getIntent().getExtras();
         userName = bundle != null ? bundle.getString("name") : "플레이어";
         if(userName == null || userName.isEmpty()) userName = "플레이어";
@@ -99,6 +114,12 @@ public class GameActivity extends AppCompatActivity {
     @Override
     public void onBackPressed() {
         showSetting();
+    }
+
+    @Override
+    protected void onDestroy() {
+        effectSoundManager.release();
+        super.onDestroy();
     }
 
     /** UI 관련 **/
@@ -178,6 +199,10 @@ public class GameActivity extends AppCompatActivity {
 
         window.setLayout(x, y);
 
+        // SP 로드
+        final SharedPreferences prefs = getSharedPreferences(getPackageName(), MODE_PRIVATE);
+        final SharedPreferences.Editor editor = prefs.edit();
+
         // 클릭 이벤트 설정
         Button btnGameStop = settingDialog.findViewById(R.id.btn_gamestop);
         btnGameStop.setOnClickListener(new View.OnClickListener() {
@@ -196,19 +221,33 @@ public class GameActivity extends AppCompatActivity {
             }
         });
 
+
         CheckBox bgmCheckBox = (CheckBox) settingDialog.findViewById(R.id.cb_bgm);
+        bgmCheckBox.setChecked(prefs.getBoolean("isBGMOn", true));
         bgmCheckBox.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
             @Override
             public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
                 // BGM
+                editor.putBoolean("isBGMOn", isChecked);
+                editor.apply();
+
+                if(isChecked) {
+                    startService(new Intent(GameActivity.this, BGMService.class));
+                }
+                else {
+                    stopService(new Intent(GameActivity.this, BGMService.class));
+                }
             }
         });
 
         CheckBox effectSoundCheckbox = (CheckBox) settingDialog.findViewById(R.id.cb_effectsound);
+        effectSoundCheckbox.setChecked(prefs.getBoolean("isEffectSoundOn", true));
         effectSoundCheckbox.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
             @Override
             public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
                 // 이펙트 사운드
+                editor.putBoolean("isEffectSoundOn", isChecked);
+                editor.apply();
             }
         });
 
@@ -399,8 +438,15 @@ public class GameActivity extends AppCompatActivity {
     }
 
     private void playerTurn() {
+        if(this.isDestroyed() || this.isFinishing()) {
+            return;
+        }
+
         // 현재 턴은 PLAYER
         currentTurnPlayer = PLAYER;
+
+        // 효과음 재생
+        effectSoundManager.play(R.raw.turn);
 
         // 현재 베팅 방법을 선택할 수 없으면 다이로 변경
         if(calculateBetPrice(playerBetMethod[PLAYER], PLAYER, COMPUTER) == -1) {
@@ -423,6 +469,10 @@ public class GameActivity extends AppCompatActivity {
     }
 
     private void computerTurn() {
+        if(this.isDestroyed() || this.isFinishing()) {
+            return;
+        }
+
         // 현재 턴은 COMPUTER
         currentTurnPlayer = COMPUTER;
 
@@ -489,10 +539,23 @@ public class GameActivity extends AppCompatActivity {
     }
 
     private void gameResult() {
+        if(this.isDestroyed() || this.isFinishing()) return;
         String dialogText = "";
 
+        // 두 명이 모두 올인을 하고, 카드가 같은 경우
+        if((playerBetMethod[PLAYER] == 4 && playerBetMethod[COMPUTER] == 4) && (playerCard[PLAYER] == playerCard[COMPUTER])) {
+            Toast.makeText(this, "두 카드 수가 같습니다! 승자를 결정하기 위해 카드를 다시 뽑습니다!", Toast.LENGTH_SHORT).show();
+
+            // 카드를 초기화하고 카드 재지급
+            resetCard();
+            playerCard[PLAYER] = getRandomCard();
+            playerCard[COMPUTER] = getRandomCard();
+
+            // 게임 결과 다시 호출
+            gameResult();
+        }
         // 둘 중에 한 명이라도 돈이 없거나 콜/다이를 한 경우
-        if((playerCoin[PLAYER] == 0 || playerCoin[COMPUTER] == 0) || (playerBetMethod[PLAYER] == 0 || playerBetMethod[PLAYER] == 1) || (playerBetMethod[COMPUTER] == 0 || playerBetMethod[COMPUTER] == 1)) {
+        else if((playerCoin[PLAYER] == 0 || playerCoin[COMPUTER] == 0) || (playerBetMethod[PLAYER] == 0 || playerBetMethod[PLAYER] == 1) || (playerBetMethod[COMPUTER] == 0 || playerBetMethod[COMPUTER] == 1)) {
             // 카드 공개
             cardOpen();
 
@@ -502,9 +565,15 @@ public class GameActivity extends AppCompatActivity {
             // 승리 플레이어에 따라 Dialog 내용 변경하기
             if(winner == PLAYER) {
                 dialogText = "승리하셨습니다!";
+
+                // 효과음 재생
+                effectSoundManager.play(R.raw.win);
             }
             else if(winner == COMPUTER) {
                 dialogText = "패배했습니다!";
+
+                // 효과음 재생
+                effectSoundManager.play(R.raw.lose);
             }
             else {
                 dialogText = "무승부입니다! 현재 베팅 (" +  currentAllBetCoin  + "코인) 이 유지됩니다!";
@@ -557,18 +626,7 @@ public class GameActivity extends AppCompatActivity {
             AlertDialog dialog = dialogBuilder.create();
             dialog.show();
         }
-        // 둘다 올인을 했는데 무승부의 경우
-        else if((playerBetMethod[PLAYER] == 4 && playerBetMethod[COMPUTER] == 4) && (playerCard[PLAYER] == playerCard[COMPUTER])) {
-            Toast.makeText(this, "두 카드 수가 같습니다! 승자를 결정하기 위해 카드를 다시 뽑습니다!", Toast.LENGTH_SHORT).show();
-
-            // 카드를 초기화하고 카드 재지급
-            resetCard();
-            playerCard[PLAYER] = getRandomCard();
-            playerCard[COMPUTER] = getRandomCard();
-
-            // 게임 결과 다시 호출
-            gameResult();
-        }
+        // 그 이외에는 베팅 계속 진행
         else {
             continueGame();
         }
