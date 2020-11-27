@@ -24,6 +24,10 @@
             android:theme="@style/AppTheme.Fullscreen"
             android:screenOrientation="portrait" />
 
+        <activity android:name=".RuleActivity"
+            android:theme="@style/AppTheme.Fullscreen"
+            android:screenOrientation="portrait" />
+
         <activity android:name=".GameActivity"
             android:theme="@style/AppTheme.Fullscreen"
             android:configChanges="screenSize|orientation"

@@ -6,11 +6,15 @@ import android.os.Handler;
 
 import androidx.appcompat.app.AppCompatActivity;
 
+import dev.aftermoon.indianpoker.databinding.ActivitySplashBinding;
+
 public class SplashActivity extends AppCompatActivity {
+    private ActivitySplashBinding binding;
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        setContentView(R.layout.activity_splash);
+        binding = ActivitySplashBinding.inflate(getLayoutInflater());
+        setContentView(binding.getRoot());
 
         new Handler().postDelayed(new Runnable() {
             @Override

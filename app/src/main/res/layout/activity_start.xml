@@ -12,7 +12,8 @@
     <androidx.constraintlayout.widget.ConstraintLayout
         android:id="@+id/mainLayout"
         android:layout_width="match_parent"
-        android:layout_height="wrap_content">
+        android:layout_height="wrap_content"
+        android:background="#FFFFFF">
 
         <Button
             android:id="@+id/btn_rule"
@@ -21,8 +22,10 @@
             android:layout_marginStart="32dp"
             android:layout_marginTop="16dp"
             android:layout_marginEnd="32dp"
-            android:backgroundTint="#b6b9e8"
+            android:backgroundTint="#B388FF"
+            android:fontFamily="sans-serif-black"
             android:text="게임 규칙"
+            android:textColor="@android:color/black"
             app:layout_constraintBottom_toTopOf="@+id/btn_start"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintHorizontal_bias="0.0"
@@ -38,8 +41,10 @@
             android:layout_marginTop="8dp"
             android:layout_marginEnd="32dp"
             android:layout_marginBottom="32dp"
-            android:backgroundTint="#b6b9e8"
+            android:backgroundTint="#B388FF"
+            android:fontFamily="sans-serif-black"
             android:text="게임 시작"
+            android:textColor="@android:color/black"
             app:layout_constraintBottom_toTopOf="@+id/tv_developer_info"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintHorizontal_bias="0.498"
@@ -61,18 +66,6 @@
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toBottomOf="@+id/tv_settinglabel_1" />
-
-        <ImageButton
-            android:id="@+id/ibtn_setting"
-            android:layout_width="24dp"
-            android:layout_height="24dp"
-            android:layout_marginTop="8dp"
-            android:layout_marginEnd="8dp"
-            android:background="#00FFFFFF"
-            android:scaleType="centerInside"
-            app:layout_constraintEnd_toEndOf="parent"
-            app:layout_constraintTop_toTopOf="parent"
-            app:srcCompat="@drawable/baseline_settings_black_48" />
 
         <ImageView
             android:id="@+id/iv_logo"

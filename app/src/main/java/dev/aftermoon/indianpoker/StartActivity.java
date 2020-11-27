@@ -27,5 +27,14 @@ public class StartActivity extends AppCompatActivity {
                 startActivity(i);
             }
         });
+
+        binding.btnRule.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                Intent i = new Intent(getApplicationContext(), RuleActivity.class);
+                startActivity(i);
+            }
+        });
+
     }
 }

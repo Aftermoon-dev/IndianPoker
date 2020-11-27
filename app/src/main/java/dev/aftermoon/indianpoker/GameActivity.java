@@ -5,10 +5,16 @@ import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.content.res.ResourcesCompat;
 
 import android.content.DialogInterface;
+import android.graphics.Point;
 import android.os.Bundle;
 import android.os.CountDownTimer;
 import android.util.Log;
+import android.view.Display;
 import android.view.View;
+import android.view.Window;
+import android.widget.Button;
+import android.widget.CheckBox;
+import android.widget.CompoundButton;
 import android.widget.Toast;
 
 import com.skydoves.elasticviews.ElasticAnimation;
@@ -61,6 +67,11 @@ public class GameActivity extends AppCompatActivity {
     // 유저 이름
     private String userName;
 
+    // 베팅 대기 Countdown
+    CountDownTimer countDownTimer;
+
+    private long currentMillis;
+
     /** 안드로이드 Override **/
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -87,7 +98,7 @@ public class GameActivity extends AppCompatActivity {
 
     @Override
     public void onBackPressed() {
-        Toast.makeText(this, "게임을 종료하려면 승/패가 결정되어야 합니다!", Toast.LENGTH_SHORT).show();
+        showSetting();
     }
 
     /** UI 관련 **/
@@ -95,7 +106,7 @@ public class GameActivity extends AppCompatActivity {
         binding.btnDie.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                showBtnAnimation(v);
+                showViewAnimation(v);
                 playerBetMethod[PLAYER] = 0;
                 setPlayerBetMethodText();
             }
@@ -104,7 +115,7 @@ public class GameActivity extends AppCompatActivity {
         binding.btnCall.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                showBtnAnimation(v);
+                showViewAnimation(v);
                 playerBetMethod[PLAYER] = 1;
                 setPlayerBetMethodText();
             }
@@ -113,7 +124,7 @@ public class GameActivity extends AppCompatActivity {
         binding.btnQuarter.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                showBtnAnimation(v);
+                showViewAnimation(v);
                 playerBetMethod[PLAYER] = 2;
                 setPlayerBetMethodText();
             }
@@ -122,7 +133,7 @@ public class GameActivity extends AppCompatActivity {
         binding.btnHalf.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                showBtnAnimation(v);
+                showViewAnimation(v);
                 playerBetMethod[PLAYER] = 3;
                 setPlayerBetMethodText();
             }
@@ -131,9 +142,83 @@ public class GameActivity extends AppCompatActivity {
         binding.btnAllin.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                showBtnAnimation(v);
+                showViewAnimation(v);
                 playerBetMethod[PLAYER] = 4;
                 setPlayerBetMethodText();
+            }
+        });
+
+        binding.btnSetting.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                showSetting();
+            }
+        });
+    }
+
+    private void showSetting() {
+        // 카운터 정지
+        countDownTimer.cancel();
+
+        // 다이얼로그 객체 생성 및 클릭 이벤트들 설정
+        final SettingDialog settingDialog = new SettingDialog(this);
+
+        // 다이얼로그 보이기
+        settingDialog.show();
+
+        // 크기 조절
+        Display display = getWindowManager().getDefaultDisplay();
+        Point size = new Point();
+        display.getSize(size);
+
+        Window window = settingDialog.getWindow();
+
+        int x = (int) (size.x * 0.5f);
+        int y = (int) (size.y * 0.7f);
+
+        window.setLayout(x, y);
+
+        // 클릭 이벤트 설정
+        Button btnGameStop = settingDialog.findViewById(R.id.btn_gamestop);
+        btnGameStop.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                settingDialog.cancel();
+                finish();
+            }
+        });
+
+        Button btnClose = settingDialog.findViewById(R.id.btn_close) ;
+        btnClose.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                settingDialog.dismiss();
+            }
+        });
+
+        CheckBox bgmCheckBox = (CheckBox) settingDialog.findViewById(R.id.cb_bgm);
+        bgmCheckBox.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
+            @Override
+            public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
+                // BGM
+            }
+        });
+
+        CheckBox effectSoundCheckbox = (CheckBox) settingDialog.findViewById(R.id.cb_effectsound);
+        effectSoundCheckbox.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
+            @Override
+            public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
+                // 이펙트 사운드
+            }
+        });
+
+        // Dialog가 Dismiss되면 다시 CountDown 처리
+        settingDialog.setOnDismissListener(new DialogInterface.OnDismissListener() {
+            @Override
+            public void onDismiss(DialogInterface dialog) {
+                if(currentTurnPlayer == PLAYER) createPlayerTimer();
+                else createComputerTimer();
+                countDownTimer.start();
             }
         });
     }
@@ -142,6 +227,7 @@ public class GameActivity extends AppCompatActivity {
         // 플레이어 베팅시 Toast 및 Text 설정
         Toast.makeText(this, getBetMethodText(PLAYER) + "을(를) 선택하셨습니다.", Toast.LENGTH_SHORT).show();
         binding.tvCurrentPlayerbet.setText(getString(R.string.current_betmethod, getBetMethodText(PLAYER), calculateBetPrice(playerBetMethod[PLAYER], PLAYER, COMPUTER)));
+        showViewAnimation(binding.tvCurrentPlayerbet);
     }
 
     private String getBetMethodText(int player) {
@@ -155,7 +241,7 @@ public class GameActivity extends AppCompatActivity {
         return betString;
     }
 
-    private void showBtnAnimation(View v) {
+    private void showViewAnimation(View v) {
         // 버튼 에니메이션 설정
         new ElasticAnimation(v)
                 .setScaleX(0.85f)
@@ -328,31 +414,11 @@ public class GameActivity extends AppCompatActivity {
         enablePlayerButton();
 
         // 플레이어에게 메시지 출력
-        Toast.makeText(this, "당신의 턴입니다! 10초 안에 배팅을 해주세요.", Toast.LENGTH_SHORT).show();
+        Toast.makeText(this, "당신의 턴입니다! 10초 안에 베팅을 해주세요.", Toast.LENGTH_SHORT).show();
 
-        // 30초 타이머 작동
-        CountDownTimer countDownTimer = new CountDownTimer((10*1000), 1000) {
-            @Override
-            public void onTick(long millisUntilFinished) {
-                // 초당 변경
-                binding.tvRemainingTime.setText(getString(R.string.remain_time, (int) (millisUntilFinished / 1000) % 60));
-            }
-
-            @Override
-            public void onFinish() {
-                // 플레이어 버튼 비활성화
-                disablePlayerButton();
-
-                // 베팅
-                playerBet(PLAYER, calculateBetPrice(playerBetMethod[PLAYER], PLAYER, COMPUTER));
-
-                // 텍스트 새로고침
-                refreshTextView();
-
-                // 컴퓨터 턴으로 넘어감
-                computerTurn();
-            }
-        };
+        // 10초 타이머 작동
+        currentMillis = 10 * 1000;
+        createPlayerTimer();
         countDownTimer.start();
     }
 
@@ -374,29 +440,9 @@ public class GameActivity extends AppCompatActivity {
         // 현재 턴 플레이어 이름 변경
         binding.tvCurrentTurn.setText(getString(R.string.current_turn, "안드로이드"));
 
-        // 5초 타이머 작동
-        CountDownTimer countDownTimer = new CountDownTimer((5*1000), 1000) {
-            @Override
-            public void onTick(long millisUntilFinished) {
-                binding.tvRemainingTime.setText(getString(R.string.remain_time, (int) (millisUntilFinished / 1000) % 60));
-            }
-
-            @Override
-            public void onFinish() {
-                // 컴퓨터 베팅 방법 설정
-                playerBetMethod[COMPUTER] = calculateComputer();
-                Toast.makeText(GameActivity.this, "안드로이드는 " + getBetMethodText(COMPUTER) + "(을)를 선택했습니다!", Toast.LENGTH_SHORT).show();
-
-                // 베팅
-                playerBet(COMPUTER, calculateBetPrice(playerBetMethod[COMPUTER], COMPUTER, PLAYER));
-
-                // 텍스트 새로고침
-                refreshTextView();
-
-                // 게임 결과 로드
-                gameResult();
-            }
-        };
+        // 5초 타이머 작동\
+        currentMillis = 5 * 1000;
+        createComputerTimer();
         countDownTimer.start();
     }
 
@@ -436,17 +482,7 @@ public class GameActivity extends AppCompatActivity {
         binding.ivPlayerCard.setImageDrawable(ResourcesCompat.getDrawable(getResources(), playerCardID, getTheme()));
 
         // 카드에 애니메이션
-        new ElasticAnimation(binding.ivPlayerCard)
-                .setScaleX(0.90f)
-                .setScaleY(0.90f)
-                .setDuration(800)
-                .setOnFinishListener(new ElasticFinishListener() {
-                    @Override
-                    public void onFinished() {
-
-                    }
-                })
-                .doAction();
+        showViewAnimation(binding.ivPlayerCard);
 
         // 컴퓨터의 계산용 카드 목록에 본인 카드 추가
         computerCardList[playerCard[COMPUTER]-1]++;
@@ -508,9 +544,9 @@ public class GameActivity extends AppCompatActivity {
                     });
 
             // 코인이 1개라도 있다면 계속하기 버튼 출력
-            if(playerCoin[PLAYER] > 0) {
-                dialogBuilder.setMessage(dialogText + "\n게임을 계속하시겠습니까?")
-                        .setPositiveButton("계속하기", new DialogInterface.OnClickListener() {
+            if(playerCoin[PLAYER] > 0 && playerCoin[COMPUTER] > 0) {
+                dialogBuilder.setMessage(dialogText + "\n게임을 이어서 하시겠습니까?")
+                        .setPositiveButton("이어하기", new DialogInterface.OnClickListener() {
                             @Override
                             public void onClick(DialogInterface dialog, int which) {
                                 gameStart(winner != -1);
@@ -520,6 +556,18 @@ public class GameActivity extends AppCompatActivity {
 
             AlertDialog dialog = dialogBuilder.create();
             dialog.show();
+        }
+        // 둘다 올인을 했는데 무승부의 경우
+        else if((playerBetMethod[PLAYER] == 4 && playerBetMethod[COMPUTER] == 4) && (playerCard[PLAYER] == playerCard[COMPUTER])) {
+            Toast.makeText(this, "두 카드 수가 같습니다! 승자를 결정하기 위해 카드를 다시 뽑습니다!", Toast.LENGTH_SHORT).show();
+
+            // 카드를 초기화하고 카드 재지급
+            resetCard();
+            playerCard[PLAYER] = getRandomCard();
+            playerCard[COMPUTER] = getRandomCard();
+
+            // 게임 결과 다시 호출
+            gameResult();
         }
         else {
             continueGame();
@@ -562,9 +610,9 @@ public class GameActivity extends AppCompatActivity {
         if (winP < 50) pcBetMethod = 0;
         // 이길 확률이 100%이거나 PC가 가진 돈이 전체 판돈 이하일경우 올인
         else if(winP == 100 || playerCoin[COMPUTER] <= currentAllBetCoin) pcBetMethod = 4;
-        // 이길 확률이 90% 이상이면서 PC가 가진 돈이 플레이어의 이전 판돈 + 현재 총 배팅금액의 절반 이상일 경우 하프
+        // 이길 확률이 90% 이상이면서 PC가 가진 돈이 플레이어의 이전 판돈 + 현재 총 베팅금액의 절반 이상일 경우 하프
         else if(winP >= 90 && playerCoin[COMPUTER] >= calculateBetPrice(3, COMPUTER, PLAYER)) pcBetMethod = 3;
-        // 이길 확률이 80% 이상이면서 PC가 가진 돈이 플레이어의 이전 판돈 + 현재 총 배팅금액의 4분의 1 이상일 경우 쿼터
+        // 이길 확률이 80% 이상이면서 PC가 가진 돈이 플레이어의 이전 판돈 + 현재 총 베팅금액의 4분의 1 이상일 경우 쿼터
         else if(winP >= 80 && playerCoin[COMPUTER] >= calculateBetPrice(2, COMPUTER, PLAYER)) pcBetMethod = 2;
         // 그 이외의 경우에는 콜
         else pcBetMethod = 1;
@@ -613,5 +661,62 @@ public class GameActivity extends AppCompatActivity {
             return playerCoin[player];
         }
         else return 0;
+    }
+
+    /** 플레이어 타이머 생성 **/
+    private void createPlayerTimer() {
+        countDownTimer = new CountDownTimer(currentMillis, 1000) {
+            @Override
+            public void onTick(long millisUntilFinished) {
+                // 초당 변경
+                currentMillis = millisUntilFinished;
+                binding.tvRemainingTime.setText(getString(R.string.remain_time, (int) (millisUntilFinished / 1000) % 60));
+            }
+
+            @Override
+            public void onFinish() {
+                // 플레이어 버튼 비활성화
+                disablePlayerButton();
+
+                // 베팅
+                playerBet(PLAYER, calculateBetPrice(playerBetMethod[PLAYER], PLAYER, COMPUTER));
+
+                // 텍스트 새로고침
+                refreshTextView();
+
+                // 컴퓨터 턴으로 넘어감
+                computerTurn();
+            }
+        };
+    }
+
+    /** 컴퓨터 타이머 생성 **/
+    private void createComputerTimer() {
+        countDownTimer = new CountDownTimer(currentMillis, 1000) {
+            @Override
+            public void onTick(long millisUntilFinished) {
+                currentMillis = millisUntilFinished;
+                binding.tvRemainingTime.setText(getString(R.string.remain_time, (int) (millisUntilFinished / 1000) % 60));
+            }
+
+            @Override
+            public void onFinish() {
+                // 컴퓨터 베팅 방법 설정
+                playerBetMethod[COMPUTER] = calculateComputer();
+                Toast.makeText(GameActivity.this, "안드로이드는 " + getBetMethodText(COMPUTER) + "(을)를 선택했습니다!", Toast.LENGTH_SHORT).show();
+
+                // 베팅
+                playerBet(COMPUTER, calculateBetPrice(playerBetMethod[COMPUTER], COMPUTER, PLAYER));
+
+                // 텍스트 새로고침
+                refreshTextView();
+
+                // 베팅 텍스트 애니메이션
+                showViewAnimation(binding.tvCurrentCombet);
+
+                // 게임 결과 로드
+                gameResult();
+            }
+        };
     }
 }
