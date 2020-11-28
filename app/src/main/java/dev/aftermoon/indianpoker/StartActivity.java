@@ -22,13 +22,13 @@ public class StartActivity extends AppCompatActivity {
 
         prefs = getSharedPreferences(getPackageName(), MODE_PRIVATE);
 
+        binding.cbEnableBgm.setChecked(prefs.getBoolean("isBGMOn", true));
+        binding.cbEnableEffect.setChecked(prefs.getBoolean("isEffectSoundOn", true));
+
         setBtnEvent();
 
-        boolean isBGMOn = prefs.getBoolean("isBGMOn", true);
-
-        // 체크박스 설정
-        binding.cbEnableBgm.setChecked(isBGMOn);
-        binding.cbEnableEffect.setChecked(prefs.getBoolean("isEffectSoundOn", true));
+        // 이펙트 소리 미리 로드를 위해 여기서 Instance 획득
+        EffectSoundManager.getInstance(this);
     }
 
     private void setBtnEvent() {
@@ -42,6 +42,7 @@ public class StartActivity extends AppCompatActivity {
                 Bundle bundle = new Bundle();
                 bundle.putString("name", binding.etPlayername.getText().toString());
                 i.putExtras(bundle);
+                i.addFlags(Intent.FLAG_ACTIVITY_NO_USER_ACTION);
                 startActivity(i);
             }
         });
@@ -50,6 +51,7 @@ public class StartActivity extends AppCompatActivity {
             @Override
             public void onClick(View v) {
                 Intent i = new Intent(getApplicationContext(), RuleActivity.class);
+                i.addFlags(Intent.FLAG_ACTIVITY_NO_USER_ACTION);
                 startActivity(i);
             }
         });
@@ -77,8 +79,22 @@ public class StartActivity extends AppCompatActivity {
 
     @Override
     protected void onDestroy() {
-        // BGM 서비스 종료
-        stopService(new Intent(this, BGMService.class));
         super.onDestroy();
+        stopService(new Intent(this, BGMService.class));
+    }
+
+    @Override
+    protected void onResume() {
+        super.onResume();
+        boolean isBGMOn = prefs.getBoolean("isBGMOn", true);
+        if(isBGMOn) startService(new Intent(this, BGMService.class));
+        binding.cbEnableBgm.setChecked(prefs.getBoolean("isBGMOn", true));
+        binding.cbEnableEffect.setChecked(prefs.getBoolean("isEffectSoundOn", true));
+    }
+
+    @Override
+    protected void onUserLeaveHint() {
+        super.onUserLeaveHint();
+        stopService(new Intent(this, BGMService.class));
     }
 }

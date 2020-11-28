@@ -76,18 +76,14 @@ public class GameActivity extends AppCompatActivity {
     // 타이머 일시정지 이전 시간 저장용
     private long currentMillis;
 
-    // 효과음 재생 매니저
-    private EffectSoundManager effectSoundManager;
+    // 일시정지 상태 확인
+    private boolean isPaused = false;
 
     /** 안드로이드 Override **/
     @Override
     protected void onCreate(Bundle savedInstanceState) {
-        // 효과음 재생 매니저 로드
-        effectSoundManager = EffectSoundManager.getInstance(this);
-        SystemClock.sleep(100); // 슬립하고 싶진 않지만.... 일단 SoundPool 로드를 위해 슬립
-
         // 시작 사운드 재생
-        effectSoundManager.play(R.raw.start);
+        EffectSoundManager.getInstance(this).play(R.raw.start);
 
         super.onCreate(savedInstanceState);
         binding = ActivityGameBinding.inflate(getLayoutInflater());
@@ -118,8 +114,38 @@ public class GameActivity extends AppCompatActivity {
 
     @Override
     protected void onDestroy() {
-        effectSoundManager.release();
         super.onDestroy();
+        if(countDownTimer != null) {
+            try {
+                countDownTimer.cancel();
+            }
+            catch (Exception e) {
+                e.printStackTrace();
+            }
+        }
+        countDownTimer = null;
+    }
+
+    @Override
+    protected void onResume() {
+        super.onResume();
+        boolean isBGMOn = getSharedPreferences(getPackageName(), MODE_PRIVATE).getBoolean("isBGMOn", true);
+        if(isBGMOn) startService(new Intent(this, BGMService.class));
+
+        if(isPaused) {
+            isPaused = false;
+            if(currentTurnPlayer == PLAYER) createPlayerTimer();
+            else createComputerTimer();
+            countDownTimer.start();
+        }
+    }
+
+    @Override
+    protected void onUserLeaveHint() {
+        super.onUserLeaveHint();
+        isPaused = true;
+        countDownTimer.cancel();
+        stopService(new Intent(this, BGMService.class));
     }
 
     /** UI 관련 **/
@@ -130,6 +156,7 @@ public class GameActivity extends AppCompatActivity {
                 showViewAnimation(v);
                 playerBetMethod[PLAYER] = 0;
                 setPlayerBetMethodText();
+                EffectSoundManager.getInstance(GameActivity.this).play(R.raw.select);
             }
         });
 
@@ -139,6 +166,7 @@ public class GameActivity extends AppCompatActivity {
                 showViewAnimation(v);
                 playerBetMethod[PLAYER] = 1;
                 setPlayerBetMethodText();
+                EffectSoundManager.getInstance(GameActivity.this).play(R.raw.select);
             }
         });
 
@@ -148,6 +176,7 @@ public class GameActivity extends AppCompatActivity {
                 showViewAnimation(v);
                 playerBetMethod[PLAYER] = 2;
                 setPlayerBetMethodText();
+                EffectSoundManager.getInstance(GameActivity.this).play(R.raw.select);
             }
         });
 
@@ -157,6 +186,7 @@ public class GameActivity extends AppCompatActivity {
                 showViewAnimation(v);
                 playerBetMethod[PLAYER] = 3;
                 setPlayerBetMethodText();
+                EffectSoundManager.getInstance(GameActivity.this).play(R.raw.select);
             }
         });
 
@@ -166,6 +196,7 @@ public class GameActivity extends AppCompatActivity {
                 showViewAnimation(v);
                 playerBetMethod[PLAYER] = 4;
                 setPlayerBetMethodText();
+                EffectSoundManager.getInstance(GameActivity.this).play(R.raw.select);
             }
         });
 
@@ -178,6 +209,8 @@ public class GameActivity extends AppCompatActivity {
     }
 
     private void showSetting() {
+        EffectSoundManager.getInstance(GameActivity.this).play(R.raw.select);
+
         // 카운터 정지
         countDownTimer.cancel();
 
@@ -263,8 +296,7 @@ public class GameActivity extends AppCompatActivity {
     }
 
     private void setPlayerBetMethodText() {
-        // 플레이어 베팅시 Toast 및 Text 설정
-        Toast.makeText(this, getBetMethodText(PLAYER) + "을(를) 선택하셨습니다.", Toast.LENGTH_SHORT).show();
+        // 플레이어 베팅시 Text 설정
         binding.tvCurrentPlayerbet.setText(getString(R.string.current_betmethod, getBetMethodText(PLAYER), calculateBetPrice(playerBetMethod[PLAYER], PLAYER, COMPUTER)));
         showViewAnimation(binding.tvCurrentPlayerbet);
     }
@@ -446,7 +478,7 @@ public class GameActivity extends AppCompatActivity {
         currentTurnPlayer = PLAYER;
 
         // 효과음 재생
-        effectSoundManager.play(R.raw.turn);
+        EffectSoundManager.getInstance(this).play(R.raw.turn);
 
         // 현재 베팅 방법을 선택할 수 없으면 다이로 변경
         if(calculateBetPrice(playerBetMethod[PLAYER], PLAYER, COMPUTER) == -1) {
@@ -567,13 +599,13 @@ public class GameActivity extends AppCompatActivity {
                 dialogText = "승리하셨습니다!";
 
                 // 효과음 재생
-                effectSoundManager.play(R.raw.win);
+                EffectSoundManager.getInstance(this).play(R.raw.win);
             }
             else if(winner == COMPUTER) {
                 dialogText = "패배했습니다!";
 
                 // 효과음 재생
-                effectSoundManager.play(R.raw.lose);
+                EffectSoundManager.getInstance(this).play(R.raw.lose);
             }
             else {
                 dialogText = "무승부입니다! 현재 베팅 (" +  currentAllBetCoin  + "코인) 이 유지됩니다!";

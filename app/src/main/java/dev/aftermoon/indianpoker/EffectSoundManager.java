@@ -32,6 +32,7 @@ public class EffectSoundManager {
         soundPoolMap.put(R.raw.start, soundPool.load(context, R.raw.start, 1));
         soundPoolMap.put(R.raw.lose, soundPool.load(context, R.raw.lose, 1));
         soundPoolMap.put(R.raw.win, soundPool.load(context, R.raw.win, 1));
+        soundPoolMap.put(R.raw.select, soundPool.load(context, R.raw.select, 1));
 
         soundPool.setOnLoadCompleteListener(new SoundPool.OnLoadCompleteListener() {
             @Override
