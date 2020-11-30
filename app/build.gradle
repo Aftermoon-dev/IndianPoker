@@ -8,8 +8,8 @@ android {
         applicationId "dev.aftermoon.indianpoker"
         minSdkVersion 23
         targetSdkVersion 29
-        versionCode 1002
-        versionName "1.0.0c"
+        versionCode 1004
+        versionName "1.0.0e"
     }
 
     buildFeatures {

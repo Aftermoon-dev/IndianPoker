@@ -465,6 +465,9 @@ public class GameActivity extends AppCompatActivity {
             playerBet(i, 1);
         }
 
+        // 컴퓨터 계산용 카드 리스트에서 플레이어 카드 제외
+        computerCardList[playerCard[PLAYER] - 1]--;
+
         // 플레이어 턴 시작
         playerTurn();
     }
@@ -566,8 +569,8 @@ public class GameActivity extends AppCompatActivity {
         // 카드에 애니메이션
         showViewAnimation(binding.ivPlayerCard);
 
-        // 컴퓨터의 계산용 카드 목록에 본인 카드 추가
-        computerCardList[playerCard[COMPUTER]-1]++;
+        // 컴퓨터의 계산용 카드 목록에 본인 카드 제거
+        computerCardList[playerCard[COMPUTER]-1]--;
     }
 
     private void gameResult() {
@@ -582,6 +585,7 @@ public class GameActivity extends AppCompatActivity {
             resetCard();
             playerCard[PLAYER] = getRandomCard();
             playerCard[COMPUTER] = getRandomCard();
+            computerCardList[playerCard[PLAYER] - 1]--;
 
             // 게임 결과 다시 호출
             gameResult();
@@ -613,12 +617,15 @@ public class GameActivity extends AppCompatActivity {
 
             // 카드 10인데 다이하면 10원씩 깎임
             if(playerBetMethod[COMPUTER] == 0 && playerCard[COMPUTER] == 10) {
+                Toast.makeText(this, "상대가 카드 10을 가지고 다이를 했기 때문에 10코인을 받았습니다!", Toast.LENGTH_SHORT).show();
                 playerCoin[COMPUTER] -= 10;
+                playerCoin[PLAYER] += 10;
             }
 
             if(playerBetMethod[PLAYER] == 0 && playerCard[PLAYER] == 10) {
-                Toast.makeText(this, "카드 10을 가지고 다이를 했기 때문에 10코인이 감소됩니다.", Toast.LENGTH_LONG).show();
+                Toast.makeText(this, "카드 10을 가지고 다이를 했기 때문에 10코인이 감소됩니다.", Toast.LENGTH_SHORT).show();
                 playerCoin[PLAYER] -= 10;
+                playerCoin[COMPUTER] += 10;
             }
 
             // 무승부가 아니라면
