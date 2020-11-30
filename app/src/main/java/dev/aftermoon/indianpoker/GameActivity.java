@@ -775,14 +775,24 @@ public class GameActivity extends AppCompatActivity {
                 // 플레이어 버튼 비활성화
                 disablePlayerButton();
 
-                // 베팅
-                playerBet(PLAYER, calculateBetPrice(playerBetMethod[PLAYER], PLAYER, COMPUTER));
+                // 다이가 아니면
+                if(playerBetMethod[PLAYER] != 0) {
+                    // 베팅
+                    playerBet(PLAYER, calculateBetPrice(playerBetMethod[PLAYER], PLAYER, COMPUTER));
 
+                    // 컴퓨터 턴으로 넘어감
+                    computerTurn();
+                }
+                // 다이라면
+                else {
+                    // 컴퓨터 베팅 방식을 콜로 변경
+                    playerBetMethod[COMPUTER] = 1;
+
+                    // 게임 결과 불러오기
+                    gameResult();
+                }
                 // 텍스트 새로고침
                 refreshTextView();
-
-                // 컴퓨터 턴으로 넘어감
-                computerTurn();
             }
         };
     }
